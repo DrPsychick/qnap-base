@@ -1,0 +1,26 @@
+---
+# defaults for drpsychick/qnap-common
+
+# QNAP environment config
+qnap_root_user: "admin"
+qnap_root_group: "administrators"
+qnap_root_home: "/root"
+qnap_root_bashrc: ".bashrc"
+qnap_root_bashaliases: ".bash_aliases"
+qnap_path: "/usr/local/python2/bin"
+qnap_aliases:
+  - alias qnap-version='cat /etc/os-release'
+
+# QNAP package config
+qnap_qpkg_install:
+  - ResourceMonitor
+  - helpdesk
+  - Python # actually required for ansible to work
+qnap_qpkg_conf: "/mnt/HDA_ROOT/.config/qpkg.conf"
+qnap_qpkg_addpath: 
+  - container-station
+qnap_qpkg_services_enabled:
+  - ResourceMonitor
+qnap_qpkg_services_disabled:
+  - helpdesk
+

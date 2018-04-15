@@ -1,0 +1,53 @@
+---
+
+- name: Setup PATH
+  lineinfile:
+    dest: "{{qnap_root_home}}/{{qnap_root_bashrc}}"
+    regexp: '^export PATH="\$PATH:{{qnap_path}}"'
+    line: 'export PATH="$PATH:{{qnap_path}}"'
+
+- name: Setup aliases
+  lineinfile:
+    dest: "{{qnap_root_home}}/{{qnap_root_bashaliases}}"
+    regexp: '^{{item}}'
+    line: '{{item}}'
+    create: yes
+  with_items: "{{qnap_aliases}}"
+
+- name: Include aliases
+  lineinfile:
+    dest: "{{qnap_root_home}}/{{qnap_root_bashrc}}"
+    regexp: '^\[ -r "\$HOME/{{qnap_root_bashaliases}}" \]'
+    line: '[ -r "$HOME/{{qnap_root_bashaliases}}" ] && source "$HOME/{{qnap_root_bashaliases}}"'
+
+- name: Download qpkg.conf
+  fetch: src={{qnap_qpkg_conf}} dest=/tmp/{{inventory_hostname}}-qpkg_conf flat=yes
+  when: qnap_qpkg_addpath|length != 0
+  changed_when: false
+# Install_Path = path to qpkg installation
+# Shell = service script (liked to /etc/init.d/$(basename $Shell)) or ALT_Shell?
+# Status = complete|...
+# Enable = TRUE|FALSE
+
+- name: Install packages
+  shell: qpkg_cli -a {{item}}
+  with_items: "{{qnap_qpkg_install}}"
+  when: lookup("ini", "Status section="+item+" file=/tmp/"+inventory_hostname+"-qpkg_conf") != "complete"
+
+- name: Setup path for apps
+  lineinfile: 
+    dest: "{{qnap_root_home+'/'+qnap_root_bashrc}}"
+    regexp: '^export PATH="\$PATH:{{lookup("ini", "Install_Path section="+item+" file=/tmp/"+inventory_hostname+"-qpkg_conf")+"/bin"}}"'
+    line: 'export PATH="$PATH:{{lookup("ini", "Install_Path section="+item+" file=/tmp/"+inventory_hostname+"-qpkg_conf")+"/bin"}}"'
+  with_items: "{{qnap_qpkg_addpath}}"
+
+- name: Enable services
+  shell: qpkg_cli --enable {{item}}
+  with_items: "{{qnap_qpkg_services_enabled}}"
+  when: lookup("ini", "Enable section="+item+" file=/tmp/"+inventory_hostname+"-qpkg_conf") != "TRUE"
+
+- name: Disable services
+  shell: qpkg_cli --disable {{item}}
+  with_items: "{{qnap_qpkg_services_disabled}}"
+  when: lookup("ini", "Enable section="+item+" file=/tmp/"+inventory_hostname+"-qpkg_conf") != "FALSE"
+
