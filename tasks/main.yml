@@ -33,6 +33,15 @@
   shell: qpkg_cli -a {{item}}
   with_items: "{{qnap_qpkg_install}}"
   when: lookup("ini", "Status section="+item+" file=/tmp/"+inventory_hostname+"-qpkg_conf") != "complete"
+  register: qpkg_installed
+
+# wait for qpkg_cli -l to complete?!?
+# "QPKG {{item}} is installed"
+# then cleanup qpkg_cli -C {{item}}
+
+# seems not to work...
+#- name: Update packages
+#  shell: qpkg_cli -U
 
 - name: Setup path for apps
   lineinfile: 
